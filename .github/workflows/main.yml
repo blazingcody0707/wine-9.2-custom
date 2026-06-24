@@ -1,4 +1,3 @@
-
 name: Build Custom Wine 9.2 WoW64 for Mobox
 
 on:
@@ -18,7 +17,6 @@ jobs:
           
           # Enable source repositories (deb-src) required for apt build-dep
           sudo echo "deb-src archive.ubuntu.com noble main restricted universe multiverse" >> /etc/apt/sources.list
-         # apt update
           sudo apt-get update
 
       - name: Install Wine Dependencies via build-dep
