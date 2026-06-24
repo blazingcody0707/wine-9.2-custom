@@ -14,8 +14,8 @@ jobs:
       - name: Configure Ubuntu Noble Source Repositories
         run: |
           # Use tee -a to safely append with sudo permissions
-          echo "deb-src archive.ubuntu.com noble main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb-src archive.ubuntu.com noble-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          echo "deb-src http://archive.ubuntu.com/ubuntu noble main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          echo "deb-src http://archive.ubuntu.com/ubuntu noble-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
           sudo apt-get update
 
       - name: Install Wine Build Dependencies
