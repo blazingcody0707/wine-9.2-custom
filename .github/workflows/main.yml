@@ -17,8 +17,7 @@ jobs:
           sudo dpkg --add-architecture i386
           
           # Enable source repositories (deb-src) required for apt build-dep
-          sudo sed -i 's/^#\s*deb-src/deb-src/' /etc/apt/sources.list /etc/apt/sources.list.d/* || true
-          
+          echo "deb-src http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse" >> /etc/apt/sources.list
           sudo apt-get update
 
       - name: Install Wine Dependencies via build-dep
