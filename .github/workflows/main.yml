@@ -14,8 +14,8 @@ jobs:
       - name: Configure Ubuntu Noble Repositories and Sources
         run: |
           # Safely append the Noble main source configurations requested
-          sudo sh -c 'echo "deb-src http://ubuntu.com noble main restricted universe multiverse" >> /etc/apt/sources.list'
-          sudo sh -c 'echo "deb-src http://ubuntu.com noble-updates main restricted universe multiverse" >> /etc/apt/sources.list'
+          sudo sh -c 'echo "deb-src archive.ubuntu.com noble main restricted universe multiverse" >> /etc/apt/sources.list'
+          sudo sh -c 'echo "deb-src archive.ubuntu.com noble-updates main restricted universe multiverse" >> /etc/apt/sources.list'
           
           # Update the package index
           sudo apt-get update
