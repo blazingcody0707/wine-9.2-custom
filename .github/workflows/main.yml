@@ -30,7 +30,7 @@ jobs:
 
       - name: Clone Brunodev Custom Wine Repository
         run: |
-          git clone --depth 1 https://github.com/blazingcody0707/wine-9.2-custom wine-source
+          git clone --depth 1 https://github.com/brunodev85/wine-9.2-custom wine-source
 
       - name: Configure Wine for New WoW64
         run: |
