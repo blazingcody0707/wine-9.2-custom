@@ -1,0 +1,67 @@
+name: Build Winlator Wine 9.2 Custom for Mobox
+
+on:
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  build-wine:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          repository: 'blazingcody0707/wine-9.2-custom'
+          ref: 'main'
+
+      - name: Install System and MinGW Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential flex bison git ccache \
+            gcc-mingw-w64 g++-mingw-w64 \
+            libx11-dev libxext-dev libxcomposite-dev \
+            libxcursor-dev libxinerama-dev libxrandr-dev \
+            libxrender-dev libxft-dev libxxf86vm-dev \
+            libvulkan-dev libgnutls28-dev libfreetype-dev \
+            libasound2-dev libpulse-dev libudev-dev \
+            libsdl2-dev libosmesa6-dev
+
+      - name: Configure Wine for WOW64
+        run: |
+          mkdir build
+          cd build
+          ../configure \
+            --prefix=/usr/local \
+            --enable-archs=i386,x86_64 \
+            --with-x \
+            --with-gstreamer \
+            --with-vulkan \
+            --with-gnutls \
+            --without-oss
+
+      - name: Compile Wine
+        run: |
+          cd build
+          # Use all available CPU cores minus one for optimal runner performance
+          make -j$(nproc)
+
+      - name: Stage Installation for Packager
+        run: |
+          cd build
+          mkdir -p ../wine-mobox-dist
+          # Use DESTDIR to redirect 'make install' safely into our custom folder
+          make install DESTDIR=$(pwd)/../wine-mobox-dist
+
+      - name: Package Tarball Archive
+        run: |
+          cd wine-mobox-dist/usr/local
+          tar -czvf ../../../wine-9.2-custom-wow64-mobox.tar.gz .
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wine-9.2-custom-wow64-mobox
+          path: wine-9.2-custom-wow64-mobox.tar.gz
+          compression-level: 9
+
