@@ -1,69 +1,68 @@
-name: Build Custom Wine 9.2 WoW64 for Mobox
+name: Build Custom Winlator Wine 9.2 WoW64 for Mobox
 
 on:
-  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+  workflow_dispatch:
 
 jobs:
-  build-wine:
+  build:
     runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Architecture and APT Source Dependencies
+      - name: Configure Ubuntu Noble Repositories and Sources
         run: |
-          sudo dpkg --add-architecture i386
+          # Safely append the Noble main source configurations requested
+          sudo sh -c 'echo "deb-src http://ubuntu.com noble main restricted universe multiverse" >> /etc/apt/sources.list'
+          sudo sh -c 'echo "deb-src http://ubuntu.com noble-updates main restricted universe multiverse" >> /etc/apt/sources.list'
           
-          # Enable source repositories (deb-src) required for apt build-dep
-          sudo echo "deb-src archive.ubuntu.com noble main restricted universe multiverse" >> /etc/apt/sources.list
+          # Update the package index
           sudo apt-get update
 
-      - name: Install Wine Dependencies via build-dep
+      - name: Install Wine Build Dependencies
         run: |
-          # Prevent interactive prompts from blocking the CI runner
-          export DEBIAN_FRONTEND=noninteractive
+          # Install general build essential utilities 
+          sudo apt-get install -y build-essential git bison flex mingw-w64
           
-          # Install general build essentials first
-          sudo apt-get install -y build-essential git flex bison mingw-w64
-          
-          # Pull build dependencies for native wine packages
+          # Run apt build-dep targeting wine
           sudo apt-get build-dep -y wine
 
-      - name: Clone brunodev85's Custom Wine 9.2
+      - name: Clone Brunodev Custom Wine Repository
         run: |
           git clone --depth 1 https://github.com/blazingcody0707/wine-9.2-custom wine-source
-          cd wine-source
-          echo "WINE_COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
-      - name: Configure and Build New WoW64 Wine
+      - name: Configure Wine for New WoW64
         run: |
-          cd wine-source
-          mkdir build && cd build
-          
-          # --enable-archs=i386,x86_64 triggers Wine's modern New WoW64 compilation path
-          ../configure \
+          mkdir wine-build
+          cd wine-build
+          # --enable-win64 paired with --enable-archs=i386,x86_64 invokes the experimental structural WoW64 mode 
+          ../wine-source/configure \
+            --prefix=/opt/wine-wow64 \
+            --enable-win64 \
             --enable-archs=i386,x86_64 \
-            --prefix=$GITHUB_WORKSPACE/wine-dist \
             --with-x \
-            --with-gstreamer \
-            --with-vulkan
-            
-          # Compile using all available CPU threads
-          make -j$(nproc)
-          
-          # Install the binary output into our isolated prefix directory
-          make install
+            --with-gstreamer
 
-      - name: Package Build for Mobox
+      - name: Compile Wine
         run: |
-          cd $GITHUB_WORKSPACE
-          # Compress the compiled binary tree into a tarball structure friendly for Mobox environments
-          tar -cJf wine-9.2-custom-wow64.tar.xz -C wine-dist .
+          cd wine-build
+          # Build utilizing all available runner CPU cores
+          make -j$(nproc)
 
-      - name: Upload Wine Artifact
-        uses: actions/upload-artifact@v4
+      - name: Package Wine Build Assets
+        run: |
+          cd wine-build
+          # Perform fake root install into a local workspace directory
+          mkdir -p ../wine-dist
+          make install DESTDIR=$(pwd)/../wine-dist
+          
+          # Compress binary components explicitly for Mobox container portability
+          cd ../wine-dist
+          tar -cJf ../wine-9.2-custom-wow64-mobox.tar.xz .
+
+      - name: Upload Wine Build Artifact
+        uses: actions/artifacts@v4
         with:
-          name: wine-9.2-custom-wow64-${{ env.WINE_COMMIT }}
-          path: wine-9.2-custom-wow64.tar.xz
-          retention-days: 7
+          name: wine-9.2-custom-wow64-mobox
+          path: wine-9.2-custom-wow64-mobox.tar.xz
